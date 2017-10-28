@@ -2,82 +2,110 @@ package com.takeru.dqx.crwal;
 
 
 import org.apache.http.HttpEntity;
-import org.apache.http.HttpHost;
-import org.apache.http.HttpStatus;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.protocol.HttpClientContext;
-import org.apache.http.client.utils.URIUtils;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.util.EntityUtils;
+import org.apache.http.client.CookieStore;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
+import org.apache.http.impl.client.*;
+import org.apache.http.message.BasicNameValuePair;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
+
 
 import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
-import java.util.List;
+
+import java.util.ArrayList;
 
 public class Crawler {
-    private final String logginURL ="https://secure.square-enix.com/oauth/oa/oauthlogin.send?client_id=dq_comm&response_type=code&svcgrp=Service_SEJ&retu=http%3A%2F%2Fhiroba.dqx.jp%2Fsc%2F&retl=dqx_p&redirect_uri=https%3A%2F%2Fsecure.dqx.jp%2Fsc%2Flogin%2Fexec%3Fp%3D0&facflg=1";
+    private final String loginURL ="https://secure.square-enix.com/oauth/oa/oauthlogin.send?client_id=dq_comm&response_type=code&svcgrp=Service_SEJ&retu=http%3A%2F%2Fhiroba.dqx.jp%2Fsc%2F&retl=dqx_p&redirect_uri=https%3A%2F%2Fsecure.dqx.jp%2Fsc%2Flogin%2Fexec%3Fp%3D0&alar=1";
+        private CookieStore cookieStore;
 
     public static void main(String[] args){
         Crawler crawl = new Crawler();
-//        try {
-            crawl.fetchStoredValue();
-//        }catch(IOException e){
-//            e.printStackTrace();
-//        }
-    }
-
-    private boolean login(String userId, String userPassword) throws IOException {
-
-        try(CloseableHttpClient httpClient = HttpClients.createDefault()){
-            HttpClientContext httpContext = HttpClientContext.create();
-            HttpPost httpPost = new HttpPost(logginURL);
-
-            try(CloseableHttpResponse response = httpClient.execute(httpPost, httpContext)){
-                HttpHost target = httpContext.getTargetHost();
-                List<URI> redirectLocations = httpContext.getRedirectLocations();
-                URI location = URIUtils.resolve(httpPost.getURI(), target, redirectLocations);
-                System.out.println("Final HTTP location: " + location.toASCIIString());
-                if(response.getStatusLine().getStatusCode() == HttpStatus.SC_OK){
-                    System.out.println(response.getStatusLine().getStatusCode());
-                    HttpEntity entity = response.getEntity();
-
-                    System.out.println(EntityUtils.toString(entity, StandardCharsets.UTF_8));
-                    System.out.println(response.getLocale());
-                    System.out.println(Arrays.toString(response.getAllHeaders()));
-
-                }
-            } catch (URISyntaxException e) {
-                e.printStackTrace();
-            }
+        try {
+            crawl.login(args[0], args[1]);
         }catch(IOException e){
             e.printStackTrace();
         }
+    }
+
+    public Crawler(){
+        cookieStore = new BasicCookieStore();
+    }
+
+    private boolean login(String userId, String userPassword) throws IOException {
+        String storedValue = fetchStoredValue();
+        System.out.println(storedValue);
+        String cisSessId = fetchCisSessid(userId, userPassword, storedValue);
+        System.out.println(cisSessId);
+        try(CloseableHttpClient httpClient = HttpClientBuilder
+                .create()
+                .setDefaultCookieStore(cookieStore)
+                .build()){
+
+            ArrayList postParameter = new ArrayList();
+            postParameter.add(new BasicNameValuePair("cis_sessid", cisSessId));
+            postParameter.add(new BasicNameValuePair("_c", "1"));
+
+            Utils.postRequest(httpClient,
+                    "https://secure.dqx.jp/sc/login/exec?p=0",
+                    new UrlEncodedFormEntity(postParameter)
+            );
+        }catch(IOException e){
+            e.printStackTrace();
+        }
+        try(CloseableHttpClient httpClient = HttpClientBuilder
+                .create()
+                .setDefaultCookieStore(cookieStore)
+                .build()
+        ){
+            String html = Utils.getRequest(httpClient, "http://hiroba.dqx.jp/sc/login/characterselect");
+            System.out.println(html);
+        }catch (IOException e){
+            e.printStackTrace();
+        }
+
         return true;
+    }
+
+    private String fetchCisSessid(String userId, String password, String storedValue) {
+        try (CloseableHttpClient httpClient = HttpClientBuilder
+                .create()
+                .setDefaultCookieStore(cookieStore)
+                .setRedirectStrategy(new LaxRedirectStrategy())
+                .build()) {
+            ArrayList postParameter = new ArrayList();
+            postParameter.add(new BasicNameValuePair("sqexid", userId));
+            postParameter.add(new BasicNameValuePair("password", password));
+            postParameter.add(new BasicNameValuePair("_STORED_", storedValue));
+
+            HttpEntity postEntity = new UrlEncodedFormEntity(postParameter);
+            String html = Utils.postRequest(httpClient, loginURL, postEntity);
+            Document document = Jsoup.parse(html);
+            return document.body().tagName("cis_sessid").child(0).child(0).val();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return "";
     }
 
     private String fetchStoredValue(){
         final String url = "https://secure.square-enix.com/oauth/oa/oauthlogin?client_id=dq_comm&response_type=code&svcgrp=Service_SEJ&retu=http%3A%2F%2Fhiroba.dqx.jp%2Fsc%2F&retl=dqx_p&redirect_uri=https%3A%2F%2Fsecure.dqx.jp%2Fsc%2Flogin%2Fexec%3Fp%3D0&facflg=1";
-        String html = Utils.getRequest(url);
-        Document document = Jsoup.parse(html);
-        Element element = Jsoup.parse(
-                document.getElementsByClass("login-content-width")
-                        .html()
-        ).getElementById("loginForm");
+        try(CloseableHttpClient client = HttpClientBuilder
+                .create()
+                .setDefaultCookieStore(cookieStore)
+                .build()){
+            String html = Utils.getRequest(client, url);
+            Document document = Jsoup.parse(html);
+            Element element = Jsoup.parse(
+                    document.getElementsByClass("login-content-width")
+                            .html());
+            String storedValue = element.getElementById("loginForm").child(0).val();
 
-        System.out.println(element.attr("_STORED_"));
+            return storedValue;
+        }catch (IOException e){
+            e.printStackTrace();
+        }
 
-
-        return html;
+        return "";
     }
 }
