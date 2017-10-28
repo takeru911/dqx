@@ -17,7 +17,7 @@ import java.util.ArrayList;
 
 public class Crawler {
     private final String loginURL ="https://secure.square-enix.com/oauth/oa/oauthlogin.send?client_id=dq_comm&response_type=code&svcgrp=Service_SEJ&retu=http%3A%2F%2Fhiroba.dqx.jp%2Fsc%2F&retl=dqx_p&redirect_uri=https%3A%2F%2Fsecure.dqx.jp%2Fsc%2Flogin%2Fexec%3Fp%3D0&alar=1";
-        private CookieStore cookieStore;
+    private CookieStore cookieStore;
 
     public static void main(String[] args){
         Crawler crawl = new Crawler();
@@ -34,9 +34,8 @@ public class Crawler {
 
     private boolean login(String userId, String userPassword) throws IOException {
         String storedValue = fetchStoredValue();
-        System.out.println(storedValue);
         String cisSessId = fetchCisSessid(userId, userPassword, storedValue);
-        System.out.println(cisSessId);
+
         try(CloseableHttpClient httpClient = HttpClientBuilder
                 .create()
                 .setDefaultCookieStore(cookieStore)
@@ -80,8 +79,7 @@ public class Crawler {
 
             HttpEntity postEntity = new UrlEncodedFormEntity(postParameter);
             String html = Utils.postRequest(httpClient, loginURL, postEntity);
-            Document document = Jsoup.parse(html);
-            return document.body().tagName("cis_sessid").child(0).child(0).val();
+            return parseCisSessid(html);
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -95,17 +93,26 @@ public class Crawler {
                 .setDefaultCookieStore(cookieStore)
                 .build()){
             String html = Utils.getRequest(client, url);
-            Document document = Jsoup.parse(html);
-            Element element = Jsoup.parse(
-                    document.getElementsByClass("login-content-width")
-                            .html());
-            String storedValue = element.getElementById("loginForm").child(0).val();
 
-            return storedValue;
+            return parseStoredValue(html);
         }catch (IOException e){
             e.printStackTrace();
         }
 
         return "";
+    }
+
+    private String parseCisSessid(String html){
+        Document document = Jsoup.parse(html);
+        return document.body().tagName("cis_sessid").child(0).child(0).val();
+    }
+
+    private String parseStoredValue(String html){
+        Document document = Jsoup.parse(html);
+        Element element = Jsoup.parse(
+                document.getElementsByClass("login-content-width")
+                        .html());
+        String storedValue = element.getElementById("loginForm").child(0).val();
+        return storedValue;
     }
 }
