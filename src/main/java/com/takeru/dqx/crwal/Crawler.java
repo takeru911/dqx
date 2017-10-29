@@ -16,7 +16,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 
 public class Crawler {
-    private final String loginURL ="https://secure.square-enix.com/oauth/oa/oauthlogin.send?client_id=dq_comm&response_type=code&svcgrp=Service_SEJ&retu=http%3A%2F%2Fhiroba.dqx.jp%2Fsc%2F&retl=dqx_p&redirect_uri=https%3A%2F%2Fsecure.dqx.jp%2Fsc%2Flogin%2Fexec%3Fp%3D0&alar=1";
     private CookieStore cookieStore;
 
     public static void main(String[] args){
@@ -67,6 +66,7 @@ public class Crawler {
     }
 
     private String fetchCisSessid(String userId, String password, String storedValue) {
+        final String loginURL ="https://secure.square-enix.com/oauth/oa/oauthlogin.send?client_id=dq_comm&response_type=code&svcgrp=Service_SEJ&retu=http%3A%2F%2Fhiroba.dqx.jp%2Fsc%2F&retl=dqx_p&redirect_uri=https%3A%2F%2Fsecure.dqx.jp%2Fsc%2Flogin%2Fexec%3Fp%3D0&alar=1";
         try (CloseableHttpClient httpClient = HttpClientBuilder
                 .create()
                 .setDefaultCookieStore(cookieStore)
