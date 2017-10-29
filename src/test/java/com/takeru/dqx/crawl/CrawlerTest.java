@@ -53,7 +53,7 @@ public class CrawlerTest {
             Method method = Crawler.class.getDeclaredMethod("parseStoredValue", String.class);
             method.setAccessible(true);
             String storedValue = (String)method.invoke(crawler, document.html());
-            assertEquals("3df06e5f47798101ac62bce3c650e276ef93bf147f79411483c2d3fcd790cbb49ecb2d0243ff0f295717fd1c29c94a512a68ed86f8b11af045f5bfe419922d10ef0ea1798fa8b184b39170e7df9f3757e480023aa2c99a68aa9b2ce40554b9571c0d7f2f93cba8c9cdf40e3bd7237113e6", storedValue);
+            assertEquals("1234", storedValue);
         }catch (IOException e){
             e.printStackTrace();
         }catch (NoSuchMethodException e){

@@ -9,11 +9,16 @@ import org.apache.http.message.BasicNameValuePair;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
+import org.jsoup.select.Evaluator;
 
 
 import java.io.IOException;
 
 import java.util.ArrayList;
+import java.util.List;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public class Crawler {
     private CookieStore cookieStore;
@@ -22,6 +27,7 @@ public class Crawler {
         Crawler crawl = new Crawler();
         try {
             crawl.login(args[0], args[1]);
+            crawl.characterSelect(args[2]);
         }catch(IOException e){
             e.printStackTrace();
         }
@@ -51,20 +57,31 @@ public class Crawler {
         }catch(IOException e){
             e.printStackTrace();
         }
-        try(CloseableHttpClient httpClient = HttpClientBuilder
-                .create()
-                .setDefaultCookieStore(cookieStore)
-                .build()
-        ){
-            String html = Utils.getRequest(httpClient, "http://hiroba.dqx.jp/sc/login/characterselect");
-            System.out.println(html);
-        }catch (IOException e){
-            e.printStackTrace();
-        }
 
         return true;
     }
 
+    private boolean characterSelect(String selectCharacterName){
+        final String characterSelectUrl = "http://hiroba.dqx.jp/sc/login/characterselect/";
+        final String execSelectUrl = "http://hiroba.dqx.jp/sc/login/characterexec";
+        try (CloseableHttpClient httpClient = HttpClientBuilder
+                .create()
+             .setDefaultCookieStore(cookieStore)
+             .build()
+        ){
+            String html = Utils.getRequest(httpClient, characterSelectUrl);
+            String selectedCharacterRel = parseCharacterSelectRel(html, selectCharacterName);
+            ArrayList postParameters = new ArrayList();
+            postParameters.add(new BasicNameValuePair("cid", selectedCharacterRel));
+            HttpEntity postEntity = new UrlEncodedFormEntity(postParameters);
+            Utils.postRequest(httpClient, execSelectUrl, postEntity);
+        }catch (IOException e){
+            e.printStackTrace();
+        }
+        return true;
+    }
+
+    @org.jetbrains.annotations.NotNull
     private String fetchCisSessid(String userId, String password, String storedValue) {
         final String loginURL ="https://secure.square-enix.com/oauth/oa/oauthlogin.send?client_id=dq_comm&response_type=code&svcgrp=Service_SEJ&retu=http%3A%2F%2Fhiroba.dqx.jp%2Fsc%2F&retl=dqx_p&redirect_uri=https%3A%2F%2Fsecure.dqx.jp%2Fsc%2Flogin%2Fexec%3Fp%3D0&alar=1";
         try (CloseableHttpClient httpClient = HttpClientBuilder
@@ -86,6 +103,7 @@ public class Crawler {
         return "";
     }
 
+    @org.jetbrains.annotations.NotNull
     private String fetchStoredValue(){
         final String url = "https://secure.square-enix.com/oauth/oa/oauthlogin?client_id=dq_comm&response_type=code&svcgrp=Service_SEJ&retu=http%3A%2F%2Fhiroba.dqx.jp%2Fsc%2F&retl=dqx_p&redirect_uri=https%3A%2F%2Fsecure.dqx.jp%2Fsc%2Flogin%2Fexec%3Fp%3D0&facflg=1";
         try(CloseableHttpClient client = HttpClientBuilder
@@ -102,11 +120,13 @@ public class Crawler {
         return "";
     }
 
+    @org.jetbrains.annotations.NotNull
     private String parseCisSessid(String html){
         Document document = Jsoup.parse(html);
         return document.body().tagName("cis_sessid").child(0).child(0).val();
     }
 
+    @org.jetbrains.annotations.NotNull
     private String parseStoredValue(String html){
         Document document = Jsoup.parse(html);
         Element element = Jsoup.parse(
@@ -114,5 +134,26 @@ public class Crawler {
                         .html());
         String storedValue = element.getElementById("loginForm").child(0).val();
         return storedValue;
+    }
+
+    @org.jetbrains.annotations.NotNull
+    private String parseCharacterSelectRel(String html, String selectCharacterName){
+        Document document = Jsoup.parse(html);
+
+        Elements selectedCharacterElements = document.getElementsByTag("tr");
+        List<Element> selectedCharacterElementList = selectedCharacterElements
+                .stream()
+                .map(element -> element.getElementsMatchingText(Pattern.compile("^" + selectCharacterName + " ")))
+                .filter(elements -> elements.size() > 0)
+                .map(element    -> element.get(0))
+                .collect(Collectors.toList());
+        if(selectedCharacterElementList.size() == 0){
+            throw new IllegalStateException("キャラクター名が誤っているっぽいです。");
+        }
+        Element selectedCharacterElement = selectedCharacterElementList.get(0);
+        return selectedCharacterElement
+                .select("td.btn_cselect")
+                .select("a")
+                .attr("rel");
     }
 }
