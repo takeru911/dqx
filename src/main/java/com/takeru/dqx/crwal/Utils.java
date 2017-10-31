@@ -1,15 +1,21 @@
 package com.takeru.dqx.crwal;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JavaType;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpStatus;
+import org.apache.http.client.CookieStore;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.util.EntityUtils;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.Map;
 
 
 public class Utils {
@@ -35,5 +41,18 @@ public class Utils {
             HttpEntity httpEntity = response.getEntity();
             return EntityUtils.toString(httpEntity, StandardCharsets.UTF_8);
         }
+    }
+
+    public static CookieStore getLoggedInCookie() throws IOException{
+        UserAuth userAuth = UserAuth.getInstance();
+        Map<String, Map> userInfo = loadUserAuthInfo();
+        Map<String, String> user = userInfo.get("auth");
+        return userAuth.getLoggedinCookie(user.get("userId"), user.get("userPassword"), user.get("characterName"));
+    }
+
+    public static Map<String, Map> loadUserAuthInfo() throws IOException{
+        final String confFilePath = Utils.class.getClassLoader().getResource("conf/Config.json").getPath();
+        ObjectMapper mapper = new ObjectMapper();
+        return mapper.readValue(new File(confFilePath),Map.class);
     }
 }
