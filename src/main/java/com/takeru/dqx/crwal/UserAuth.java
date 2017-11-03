@@ -11,6 +11,7 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
+import javax.jws.soap.SOAPBinding;
 import java.io.IOException;
 
 import java.util.ArrayList;
@@ -20,20 +21,19 @@ import java.util.stream.Collectors;
 
 public class UserAuth {
     private CookieStore cookieStore;
+    private static UserAuth userAuth = new UserAuth();
     private boolean isLoggedin = false;
     private boolean isCharacterSelected = false;
 
     public static void main(String[] args){
-        UserAuth auth = new UserAuth();
         try {
-            auth.login(args[0], args[1]);
-            auth.characterSelect(args[2]);
+            Utils.getLoggedInCookie();
         }catch(IOException e){
             e.printStackTrace();
         }
     }
 
-    public UserAuth(){
+    private UserAuth(){
         cookieStore = new BasicCookieStore();
     }
 
@@ -60,7 +60,6 @@ public class UserAuth {
             ArrayList postParameter = new ArrayList();
             postParameter.add(new BasicNameValuePair("cis_sessid", cisSessId));
             postParameter.add(new BasicNameValuePair("_c", "1"));
-
             Utils.postRequest(httpClient,
                     "https://secure.dqx.jp/sc/login/exec?p=0",
                     new UrlEncodedFormEntity(postParameter)
@@ -157,5 +156,9 @@ public class UserAuth {
                 .select("td.btn_cselect")
                 .select("a")
                 .attr("rel");
+    }
+
+    public static UserAuth getInstance(){
+        return userAuth;
     }
 }

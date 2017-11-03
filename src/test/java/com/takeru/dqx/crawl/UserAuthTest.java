@@ -23,7 +23,7 @@ public class UserAuthTest {
                 .getResource("com/takeru/dqx/crawl/Cis_SSid_Test.html").getPath();
         try {
             Document document = Jsoup.parse(new File(htmlFilePath), "UTF-8");
-            UserAuth userAuth = new UserAuth();
+            UserAuth userAuth = UserAuth.getInstance();
             Method method = UserAuth.class.getDeclaredMethod("parseCisSessid", String.class);
             method.setAccessible(true);
             String cis_Ssid = (String)method.invoke(userAuth, document.html());
@@ -47,7 +47,7 @@ public class UserAuthTest {
                 .getResource("com/takeru/dqx/crawl/StoredValueTest.html").getPath();
         try {
             Document document = Jsoup.parse(new File(htmlFilePath), "UTF-8");
-            UserAuth userAuth = new UserAuth();
+            UserAuth userAuth = UserAuth.getInstance();
             Method method = UserAuth.class.getDeclaredMethod("parseStoredValue", String.class);
             method.setAccessible(true);
             String storedValue = (String)method.invoke(userAuth, document.html());
