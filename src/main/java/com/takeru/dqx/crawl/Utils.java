@@ -24,7 +24,7 @@ public class Utils {
 
     public static String getRequest(HttpClient httpClient, String url) throws IOException{
         String html = "";
-            HttpGet getMethod = new HttpGet(url);
+        HttpGet getMethod = new HttpGet(url);
 
         try (CloseableHttpResponse response = (CloseableHttpResponse) httpClient.execute(getMethod)) {
             if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
@@ -36,7 +36,7 @@ public class Utils {
         return html;
     }
 
-    public static String postRequest(HttpClient client, String url, HttpEntity postEntity) throws IOException{
+    static String postRequest(HttpClient client, String url, HttpEntity postEntity) throws IOException{
         HttpPost httpPost = new HttpPost(url);
         httpPost.setEntity(postEntity);
         try(CloseableHttpResponse response = (CloseableHttpResponse) client.execute(httpPost)){
@@ -45,14 +45,14 @@ public class Utils {
         }
     }
 
-    public static CookieStore getLoggedInCookie() throws IOException{
+    static CookieStore getLoggedInCookie() throws IOException{
         UserAuth userAuth = UserAuth.getInstance();
         Map<String, Map> userInfo = loadUserAuthInfo();
         Map<String, String> user = userInfo.get("auth");
         return userAuth.getLoggedinCookie(user.get("userId"), user.get("userPassword"), user.get("characterName"));
     }
 
-    public static Map<String, Map> loadUserAuthInfo() throws IOException{
+    static Map<String, Map> loadUserAuthInfo() throws IOException{
         final String confFilePath = Utils.class.getClassLoader().getResource("conf/Config.json").getPath();
         ObjectMapper mapper = new ObjectMapper();
         return mapper.readValue(new File(confFilePath),Map.class);

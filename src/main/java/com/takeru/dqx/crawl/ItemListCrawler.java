@@ -3,16 +3,14 @@ package com.takeru.dqx.crawl;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.http.client.CookieStore;
 import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 
-import javax.print.Doc;
-import javax.rmi.CORBA.Util;
 import java.io.IOException;
 import java.net.URL;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 public class ItemListCrawler {
     private CookieStore cookieStore;
@@ -27,28 +25,30 @@ public class ItemListCrawler {
             new ItemListCrawler().fetchItemUrls();
         }catch(IOException e){
             e.printStackTrace();
+        }catch (InterruptedException e){
+            e.printStackTrace();
         }
     }
 
-    private void fetchItemUrls() throws IOException{
+    private void fetchItemUrls() throws IOException, InterruptedException{
         Map<String, String> urls = fetchItemCategoryUrls();
         Set<String> keyset = urls.keySet();
-        List<Map> categoryUrlList = keyset.stream()
-                .map(key -> {
-                    String url = urls.get(key);
-                    System.out.println(key);
-                    Map<String, String> itemUrlList = null;
-                    try {
-                        itemUrlList = fetchItemList(url);
-                    }catch(IOException e) {
-                        e.printStackTrace();
-                    }catch (InterruptedException e){
-                        e.printStackTrace();
-                    }
-                    return new HashMap<String, Map>().put(key, itemUrlList);
-                }
-        ).collect(Collectors.toList());
-
+        Map<String, Map> categoriesItemUrls = new HashMap<>();
+        for(String key: keyset){
+            String url = urls.get(key);
+            Map<String, String> itemUrlList = fetchItemList(url);
+            categoriesItemUrls.put(key, itemUrlList);
+        }
+        Set<String> ks = categoriesItemUrls.keySet();
+        for(String key: ks){
+            Map<String, String> itemUrls = categoriesItemUrls.get(key);
+            Set<String> itemNames = itemUrls.keySet();
+            System.out.println(key);
+            for(String itemName: itemNames){
+                String itemUrl = itemUrls.get(itemName);
+                System.out.println(itemName + ": " + itemUrl);
+            }
+        }
     }
 
     private Map<String, String> fetchItemList(String categoryBaseUrl) throws IOException, InterruptedException{
@@ -58,14 +58,39 @@ public class ItemListCrawler {
 
         for(int i = 0; i <= maxPage; i++){
             Document itemPage = Utils.convertUrl2JsoupDocument(categoryBaseUrl + "/page/" + i, cookieStore);
-
+            Map pageItemList = parseCategoryPage(itemPage);
+            itemUrlPair.putAll(pageItemList);
         }
 
         return itemUrlPair;
     }
 
     private Map<String, String> parseCategoryPage(Document document){
-        return null;
+        Elements elements = document.select("div#contentArea")
+                .select("div.cttBox")
+                .select("table.searchItemTable")
+                .select("tbody");
+        Map<String, String> itemMap = new HashMap<>();
+        int i = 0;
+        for(Element element: elements){
+            if(i == 0){
+                i++;
+                //最初はskipしたい・・・
+                //TODO: きっともっとよいやりかたあるよ・・・
+                continue;
+            }
+            Elements itemTag = element.select("tr")
+                    .select("td")
+                    .select("a.strongLnk");
+            String url = itemTag.attr("href");
+            String[] split = url.split("/");
+            // /sc/game/item/${ItemId}/
+            String itemId = split[split.length - 1];
+            String itemName = itemTag.text();
+            itemMap.put(itemName, itemId);
+        }
+
+        return itemMap;
     }
 
     private int getMaxPageNumber(Document document){
