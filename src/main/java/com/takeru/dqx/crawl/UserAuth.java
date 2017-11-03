@@ -1,4 +1,4 @@
-package com.takeru.dqx.crwal;
+package com.takeru.dqx.crawl;
 
 
 import org.apache.http.HttpEntity;
@@ -11,7 +11,6 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
-import javax.jws.soap.SOAPBinding;
 import java.io.IOException;
 
 import java.util.ArrayList;
@@ -51,7 +50,6 @@ public class UserAuth {
     private boolean login(String userId, String userPassword) throws IOException {
         String storedValue = fetchStoredValue();
         String cisSessId = fetchCisSessid(userId, userPassword, storedValue);
-
         try(CloseableHttpClient httpClient = HttpClientBuilder
                 .create()
                 .setDefaultCookieStore(cookieStore)

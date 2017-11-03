@@ -1,6 +1,5 @@
 package com.takeru.dqx.crawl;
 
-import com.takeru.dqx.crwal.UserAuth;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.junit.jupiter.api.Test;

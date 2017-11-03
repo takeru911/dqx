@@ -1,7 +1,5 @@
-package com.takeru.dqx.crwal;
+package com.takeru.dqx.crawl;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpStatus;
@@ -60,7 +58,7 @@ public class Utils {
         return mapper.readValue(new File(confFilePath),Map.class);
     }
 
-    public static Document convertUrl2JsoupDocument(String url, CookieStore cookie) throws IOException{
+    public static Document convertUrl2JsoupDocument(String url, CookieStore cookie) throws IOException, InterruptedException{
         try(CloseableHttpClient httpClient = HttpClientBuilder
                 .create()
                 .setDefaultCookieStore(cookie)
@@ -68,7 +66,12 @@ public class Utils {
         ){
             HttpGet get = new HttpGet(url);
             try(CloseableHttpResponse response = httpClient.execute(get)){
+                if(response.getStatusLine().getStatusCode() == 403){
+                    Thread.sleep(200);
+                    return convertUrl2JsoupDocument(url, cookie);
+                }
                 String html = EntityUtils.toString(response.getEntity());
+
                 return Jsoup.parse(html);
             }
 
