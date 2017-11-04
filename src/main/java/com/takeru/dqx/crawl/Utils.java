@@ -67,6 +67,7 @@ public class Utils {
             HttpGet get = new HttpGet(url);
             try(CloseableHttpResponse response = httpClient.execute(get)){
                 if(response.getStatusLine().getStatusCode() == 403){
+                    //TODO n回以上再実行したら例外を投げる
                     Thread.sleep(200);
                     return convertUrl2JsoupDocument(url, cookie);
                 }
@@ -74,7 +75,6 @@ public class Utils {
 
                 return Jsoup.parse(html);
             }
-
         }
     }
 }

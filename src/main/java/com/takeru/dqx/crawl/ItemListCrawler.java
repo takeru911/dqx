@@ -5,7 +5,9 @@ import org.apache.http.client.CookieStore;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import org.omg.PortableInterceptor.ServerRequestInfo;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.util.HashMap;
@@ -22,7 +24,9 @@ public class ItemListCrawler {
 
     public static void main(String[] args){
         try {
-            new ItemListCrawler().fetchItemUrls();
+            Map<String, Map> itemUrls = new ItemListCrawler().fetchItemUrls();
+            ObjectMapper mapper = new ObjectMapper();
+            mapper.writeValue(new File("ItemUrls.json"), itemUrls);
         }catch(IOException e){
             e.printStackTrace();
         }catch (InterruptedException e){
@@ -30,7 +34,7 @@ public class ItemListCrawler {
         }
     }
 
-    private void fetchItemUrls() throws IOException, InterruptedException{
+    private Map<String, Map> fetchItemUrls() throws IOException, InterruptedException{
         Map<String, String> urls = fetchItemCategoryUrls();
         Set<String> keyset = urls.keySet();
         Map<String, Map> categoriesItemUrls = new HashMap<>();
@@ -39,16 +43,8 @@ public class ItemListCrawler {
             Map<String, String> itemUrlList = fetchItemList(url);
             categoriesItemUrls.put(key, itemUrlList);
         }
-        Set<String> ks = categoriesItemUrls.keySet();
-        for(String key: ks){
-            Map<String, String> itemUrls = categoriesItemUrls.get(key);
-            Set<String> itemNames = itemUrls.keySet();
-            System.out.println(key);
-            for(String itemName: itemNames){
-                String itemUrl = itemUrls.get(itemName);
-                System.out.println(itemName + ": " + itemUrl);
-            }
-        }
+
+        return categoriesItemUrls;
     }
 
     private Map<String, String> fetchItemList(String categoryBaseUrl) throws IOException, InterruptedException{
