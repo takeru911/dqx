@@ -5,7 +5,6 @@ import org.apache.http.client.CookieStore;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
-import org.omg.PortableInterceptor.ServerRequestInfo;
 
 import java.io.File;
 import java.io.IOException;
@@ -27,9 +26,7 @@ public class ItemListCrawler {
             Map<String, Map> itemUrls = new ItemListCrawler().fetchItemUrls();
             ObjectMapper mapper = new ObjectMapper();
             mapper.writeValue(new File("ItemUrls.json"), itemUrls);
-        }catch(IOException e){
-            e.printStackTrace();
-        }catch (InterruptedException e){
+        }catch(IOException | InterruptedException e){
             e.printStackTrace();
         }
     }

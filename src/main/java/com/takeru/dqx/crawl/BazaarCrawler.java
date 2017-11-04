@@ -9,7 +9,6 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 import java.io.IOException;
-import java.lang.reflect.Array;
 import java.util.*;
 
 public class BazaarCrawler {
@@ -77,7 +76,7 @@ public class BazaarCrawler {
 
             ItemDetail itemDetail = new ItemDetail(item, stars, Integer.parseInt(alchemy));
             if(!itemPrices.containsKey(itemDetail)){
-                itemPrices.put(itemDetail, new ArrayList<Integer>());
+                itemPrices.put(itemDetail, new ArrayList<>());
             }
             itemPrices.get(itemDetail).add(Integer.parseInt(price) / Integer.parseInt(exhibitNum));
         }
