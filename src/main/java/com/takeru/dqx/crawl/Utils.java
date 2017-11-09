@@ -59,6 +59,10 @@ public class Utils {
     }
 
     public static Document convertUrl2JsoupDocument(String url, CookieStore cookie) throws IOException, InterruptedException{
+        return convertUrl2JsoupDocument(url, cookie, 0);
+    }
+
+    public static Document convertUrl2JsoupDocument(String url, CookieStore cookie, int waits) throws IOException, InterruptedException{
         try(CloseableHttpClient httpClient = HttpClientBuilder
                 .create()
                 .setDefaultCookieStore(cookie)
@@ -67,9 +71,12 @@ public class Utils {
             HttpGet get = new HttpGet(url);
             try(CloseableHttpResponse response = httpClient.execute(get)){
                 if(response.getStatusLine().getStatusCode() == 403){
-                    //TODO n回以上再実行したら例外を投げる
-                    Thread.sleep(200);
-                    return convertUrl2JsoupDocument(url, cookie);
+                    Thread.sleep(waits);
+                    if(waits > 4000){
+                        throw new IOException();
+                    }
+                    System.out.println(waits);
+                    return convertUrl2JsoupDocument(url, cookie, waits + 200);
                 }
                 String html = EntityUtils.toString(response.getEntity());
 
