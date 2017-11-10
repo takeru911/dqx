@@ -16,16 +16,17 @@ public class BazaarCrawlRunner implements Runnable{
     private List<Map<ItemDetail, List<Integer>>> itemPrices;
 
     public static void main(String[] args) throws Exception{
-        BazaarCrawlRunner runner = new BazaarCrawlRunner("ルアー");
+        if(args.length != 1){
+            System.out.println("Usage: 引数にcrawlしたいカテゴリーを入れてくだせい");
+            System.exit(1);
+        }
+        String category = args[0];
+        BazaarCrawlRunner runner = new BazaarCrawlRunner(category);
         runner.run();
         List<Map<ItemDetail, List<Integer>>> list = runner.itemPrices;
-        for(Map<ItemDetail, List<Integer>> itemPrice: list){
-            Set<ItemDetail> details = itemPrice.keySet();
-            for(ItemDetail itemDetail: details){
-                System.out.println(itemDetail.toString());
-                System.out.println(itemPrice.get(itemDetail).toString());
-            }
-        }
+        ObjectMapper mapper = new ObjectMapper();
+        String str = mapper.writeValueAsString(list.get(0));
+        System.out.println(str);
     }
 
     public BazaarCrawlRunner(String category) throws IOException{
@@ -41,7 +42,6 @@ public class BazaarCrawlRunner implements Runnable{
         List<Item> items = itemNames.stream()
                 .map(k ->
                         {
-                            System.out.println(k);
                             String url = itemUrls.get(k);
                             return new Item(url, k);
                         }

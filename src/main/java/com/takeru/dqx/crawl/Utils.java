@@ -75,7 +75,6 @@ public class Utils {
                     if(waits > 4000){
                         throw new IOException();
                     }
-                    System.out.println(waits);
                     return convertUrl2JsoupDocument(url, cookie, waits + 200);
                 }
                 String html = EntityUtils.toString(response.getEntity());
