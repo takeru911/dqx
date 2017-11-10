@@ -16,6 +16,7 @@ import org.jsoup.nodes.Document;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
@@ -53,9 +54,9 @@ public class Utils {
     }
 
     static Map<String, Map> loadUserAuthInfo() throws IOException{
-        final String confFilePath = Utils.class.getClassLoader().getResource("conf/Config.json").getPath();
+        final URL confFileURL = Utils.class.getClassLoader().getResource("conf/Config.json");
         ObjectMapper mapper = new ObjectMapper();
-        return mapper.readValue(new File(confFilePath),Map.class);
+        return mapper.readValue(confFileURL, Map.class);
     }
 
     public static Document convertUrl2JsoupDocument(String url, CookieStore cookie) throws IOException, InterruptedException{
