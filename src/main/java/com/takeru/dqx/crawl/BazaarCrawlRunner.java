@@ -6,6 +6,7 @@ import com.takeru.dqx.item.ItemDetail;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -34,9 +35,10 @@ public class BazaarCrawlRunner implements Runnable{
     }
 
     private List<Item> fetchCategoryItems(String category) throws IOException{
-        final String confFilePath = Utils.class.getClassLoader().getResource("conf/ItemUrls.json").getPath();
+        final InputStream stream = Utils.class.getClassLoader().getResourceAsStream("conf/ItemUrls.json");
+
         ObjectMapper mapper = new ObjectMapper();
-        Map<String, Map> map = mapper.readValue(new File(confFilePath),Map.class);
+        Map<String, Map> map = mapper.readValue(stream,Map.class);
         Map<String, String> itemUrls = map.get(category);
         Set<String> itemNames = itemUrls.keySet();
         List<Item> items = itemNames.stream()
