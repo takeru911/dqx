@@ -18,7 +18,7 @@ public class BazaarCrawler {
     public static void main(String[] args){
         try{
             BazaarCrawler crawler = new BazaarCrawler();
-            crawler.fetchBazaarPrices(new Item("18215d7cc856cec55d789973bc207f192cd01741", "よるのパピヨン"));
+            crawler.fetchBazaarPrices(new Item("e8370994e891fcd8c0d14ca18e6036b15b3f2416", "ブラッドカメリア"));
             Map<ItemDetail, List<Integer>> map = crawler.getItemPrices();
             Set<ItemDetail> keyset = map.keySet();
             for (ItemDetail itemDetail: keyset){
@@ -68,7 +68,7 @@ public class BazaarCrawler {
             String price = element.select("td")
                     .get(1)
                     .getElementsByTag("p")
-                    .get(1).html().replaceAll("[^0-9]", "");
+                    .get(1).html().split("G")[0].replaceAll("[^0-9]", "");
             String alchemy = "0";
             if(itemName.contains("+")){
                 alchemy = itemName.split("\\+")[1];
